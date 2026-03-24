@@ -52,7 +52,7 @@
 
     .quick-questions {
       display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 10px;
       margin: 20px 0 18px;
     }
@@ -246,7 +246,7 @@
 
     function renderQuickQuestions() {
       const container = document.getElementById("quickQuestions");
-      const selected = shuffleArray(quickQuestionPool).slice(0, 2);
+      const selected = shuffleArray(quickQuestionPool).slice(0, 3);
 
       container.innerHTML = "";
 
