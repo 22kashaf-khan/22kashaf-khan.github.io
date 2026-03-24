@@ -182,14 +182,7 @@
       </p>
     </div>
 
-    <div class="quick-questions">
-      <button onclick="askQuickQuestion('What has Kashaf built?')">What has Kashaf built?</button>
-      <button onclick="askQuickQuestion('What is Kashaf working on right now?')">What is he working on?</button>
-      <button onclick="askQuickQuestion('Why should someone hire Kashaf?')">Why hire Kashaf?</button>
-      <button onclick="askQuickQuestion('Is Kashaf open to work or collaborations?')">Open to work?</button>
-      <button onclick="askQuickQuestion('What does Kashaf think about AI hype?')">AI hype?</button>
-      <button onclick="askQuickQuestion('What kind of person is Kashaf?')">What is he like?</button>
-    </div>
+    <div class="quick-questions" id="quickQuestions"></div>
 
     <div id="messages">
       <div class="message bot">
@@ -212,65 +205,114 @@
     </div>
   </div>
 
-  <script>
-    const API_URL = "https://ai-twin-backend-omega.vercel.app/api/chat";
+<script>
+  const API_URL = "https://ai-twin-backend-omega.vercel.app/api/chat";
 
-    function askQuickQuestion(question) {
-      document.getElementById("input").value = question;
-      sendMessage();
+  const quickQuestionPool = [
+    "What has Kashaf built?",
+    "Why should someone hire Kashaf?",
+    "What kind of roles is Kashaf looking for?",
+    "What makes Kashaf different from other AI engineers?",
+    "What is Kashaf most proud of?",
+    "What does Kashaf think about AI hype?",
+    "Is Kashaf open to work or collaborations?",
+    "What kind of person is Kashaf?",
+    "What does Kashaf like outside work?",
+    "What is Kashaf working on right now?",
+    "What are Kashaf's strongest skills?",
+    "What kind of companies does Kashaf like?",
+    "What is Kashaf's favorite anime?",
+    "What music does Kashaf like?",
+    "Is Kashaf a morning person or night owl?",
+    "What fictional world would Kashaf love to live in?",
+    "What kind of humor does Kashaf have?",
+    "What does Kashaf do for fun?",
+    "What are Kashaf's hobbies?",
+    "What kind of problems does Kashaf enjoy solving?"
+  ];
+
+  function shuffleArray(array) {
+    const arr = [...array];
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
     }
+    return arr;
+  }
 
-    async function sendMessage() {
-      const input = document.getElementById("input");
-      const messages = document.getElementById("messages");
-      const userText = input.value.trim();
+  function renderQuickQuestions() {
+    const container = document.getElementById("quickQuestions");
+    const selected = shuffleArray(quickQuestionPool).slice(0, 6);
 
-      if (!userText) return;
+    container.innerHTML = selected
+      .map(
+        question =>
+          `<button onclick="askQuickQuestion(${JSON.stringify(question)})">${escapeHtml(question)}</button>`
+      )
+      .join("");
+  }
 
-      messages.innerHTML += `<div class="message user">${escapeHtml(userText)}</div>`;
-      input.value = "";
-      messages.innerHTML += `<div class="message bot" id="typing">Thinking...</div>`;
+  function askQuickQuestion(question) {
+    document.getElementById("input").value = question;
+    sendMessage();
+  }
+
+  async function sendMessage() {
+    const input = document.getElementById("input");
+    const messages = document.getElementById("messages");
+    const userText = input.value.trim();
+
+    if (!userText) return;
+
+    messages.innerHTML += `<div class="message user">${escapeHtml(userText)}</div>`;
+    input.value = "";
+    messages.innerHTML += `<div class="message bot" id="typing">Thinking...</div>`;
+    messages.scrollTop = messages.scrollHeight;
+
+    try {
+      const response = await fetch(API_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ message: userText })
+      });
+
+      const data = await response.json();
+
+      const typing = document.getElementById("typing");
+      if (typing) typing.remove();
+
+      if (!response.ok) {
+        messages.innerHTML += `<div class="message bot">Backend error: ${escapeHtml(data.error || "Unknown error")}</div>`;
+        messages.scrollTop = messages.scrollHeight;
+        return;
+      }
+
+      messages.innerHTML += `<div class="message bot">${escapeHtml(data.reply)}</div>`;
       messages.scrollTop = messages.scrollHeight;
 
-      try {
-        const response = await fetch(API_URL, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({ message: userText })
-        });
+      renderQuickQuestions();
+    } catch (error) {
+      const typing = document.getElementById("typing");
+      if (typing) typing.remove();
 
-        const data = await response.json();
-
-        const typing = document.getElementById("typing");
-        if (typing) typing.remove();
-
-        if (!response.ok) {
-          messages.innerHTML += `<div class="message bot">Backend error: ${escapeHtml(data.error || "Unknown error")}</div>`;
-          messages.scrollTop = messages.scrollHeight;
-          return;
-        }
-
-        messages.innerHTML += `<div class="message bot">${escapeHtml(data.reply)}</div>`;
-        messages.scrollTop = messages.scrollHeight;
-      } catch (error) {
-        const typing = document.getElementById("typing");
-        if (typing) typing.remove();
-
-        messages.innerHTML += `<div class="message bot">Connection failed: ${escapeHtml(error.message)}</div>`;
-        messages.scrollTop = messages.scrollHeight;
-      }
+      messages.innerHTML += `<div class="message bot">Connection failed: ${escapeHtml(error.message)}</div>`;
+      messages.scrollTop = messages.scrollHeight;
     }
+  }
 
-    function escapeHtml(text) {
-      return text
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-    }
-  </script>
+  function escapeHtml(text) {
+    return text
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+
+  renderQuickQuestions();
+</script>
+  
 </body>
 </html>
